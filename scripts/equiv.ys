@@ -1,0 +1,14 @@
+# Lint + formal sequential equivalence of mac_baseline and mac_opiso (Yosys).
+# The miter compares all outputs every cycle. sat -tempinduct proves, by
+# k-induction, that they match for every input sequence starting from the
+# all-zero state (= the reset state of both designs).
+# Run from the repository root:  yosys -s scripts/equiv.ys
+read_verilog -sv rtl/mac_baseline.sv rtl/mac_opiso.sv
+hierarchy -check
+proc
+check -assert
+miter -equiv -flatten -make_outputs mac_baseline mac_opiso miter
+hierarchy -top miter
+opt_clean
+dffunmap
+sat -verify -tempinduct -prove trigger 0 -set-init-zero -maxsteps 20 miter

@@ -1,0 +1,57 @@
+name: ci
+on:
+  push:
+    paths: ['rtl/**', 'tb/**', 'scripts/**', 'asic/**', '.github/workflows/**']
+  workflow_dispatch:
+
+jobs:
+  sim:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq iverilog
+      - name: RTL simulation (exhaustive + directed + random, self-checking)
+        run: bash scripts/sim.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: sim-log, path: build/sim.log }
+
+  formal:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq yosys
+      - name: Formal equivalence (Yosys k-induction)
+        run: mkdir -p build && yosys -q -l build/equiv.log -s scripts/equiv.ys && grep -E 'SUCCESS|proven' build/equiv.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: equiv-log, path: build/equiv.log }
+
+  asic:
+    needs: sim
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install -q librelane==2.4.13 && sudo apt-get update -qq && sudo apt-get install -y -qq iverilog
+      - name: RTL-to-GDSII, sky130A / sky130_fd_sc_hd (LibreLane classic flow)
+        run: |
+          for d in mac_baseline mac_opiso; do
+            librelane --dockerized --run-tag ci asic/$d/config.json
+          done
+      - name: Gate-level simulation + VCD-based power (OpenSTA)
+        continue-on-error: true
+        run: bash scripts/power.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: asic-results
+          path: |
+            asic/*/runs/ci/final/metrics.json
+            asic/*/runs/ci/final/gds/
+            asic/*/runs/ci/*-openroad-stapostpnr/summary.rpt
+            asic/*/runs/ci/*.log
+            build/*.log
+            build/*.rpt
