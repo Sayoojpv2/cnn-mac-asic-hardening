@@ -27,7 +27,10 @@ array still switches on an ASIC. New design holds the operand registers instead 
 - RTL operand-register toggles, opt vs base: 0% zeros -1%, 50% zeros -42%, 80% zeros -69%; product reg -1/-32/-43%.
 - Formal: k-induction (`sat -tempinduct`) did not converge in 15+ min (induction step = SAT multiplier equivalence).
   Switched to bounded proof `sat -seq 10` from reset — result: see below / RESULTS.md.
-- ASIC: first CI run 42267304096 in progress at time of writing.
+- ASIC (CI run 42268125887): both designs completed RTL-to-GDSII; DRC 0 (route/Magic/KLayout), LVS 0, antenna 0;
+  GL sim of final netlists PASS; area +2.7 %; VCD power −6.2 % total (−21.8 % combinational); typical-corner
+  timing met, slow corner fails by 0.30/0.44 ns. All numbers in RESULTS.md, raw files + GDS (gz) in results/.
+- Run 1 (42267304096) failed: `librelane --dockerized` needs a TTY; fixed with `script -q -e -c` in ci.yml.
 
 ## Tools
 Local (Windows): git, gh (Sayoojpv2), Python 3.14, yowasp-yosys 0.70 (user site:
@@ -35,14 +38,15 @@ Local (Windows): git, gh (Sayoojpv2), Python 3.14, yowasp-yosys 0.70 (user site:
 simulation and the ASIC flow run in GitHub Actions only.
 
 ## GitHub
-`github.com/Sayoojpv2/cnn-mac-asic-hardening` — created PRIVATE. Make public only after results are recorded:
-`gh repo edit Sayoojpv2/cnn-mac-asic-hardening --visibility public --accept-visibility-change-consequences`
+`https://github.com/Sayoojpv2/cnn-mac-asic-hardening`: created private, made PUBLIC after verification.
 
-## Next steps
-1. Check CI: `gh run list -L 3`; download: `gh run download <id> -n asic-results -D build/ci`.
-2. Record metrics from `asic/*/runs/ci/final/metrics.json` + `build/power_*.rpt` into RESULTS.md; write README.md.
-3. Commit the bounded-equivalence change (scripts/equiv.ys), push, confirm formal job passes.
-4. Make repo public.
+## Status: phases 1-7 DONE (RTL, TB, CI sim, ASIC flow, power, docs, repo published)
+Open items, in priority order:
+1. Formal: check the `formal` job of run 42268125887 (`gh run view 42268125887 --json jobs`) and the local
+   `build/equiv.log`. If `sat -seq 10` finished, put the result in RESULTS.md + README Limitations. If it timed out,
+   lower to `-seq 6`, or abstract the multiplier for an unbounded proof.
+2. Optional timing closure at the slow corner: e.g. CLOCK_PERIOD 11, or move the zero detector off the input path
+   (register `live` with the sample). Re-run CI, update RESULTS.md.
 
 ## Resume
 Open this folder in Claude Code and say `RESUME`. Local proof: `yowasp-yosys -s scripts/equiv.ys` (from repo root).

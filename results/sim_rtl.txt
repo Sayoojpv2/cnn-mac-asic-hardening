@@ -1,0 +1,7 @@
+DIRECTED boundary/accumulator/clear checks: 0 failures
+EXHAUSTIVE 1048576 operand pairs done, product range -262016..262144, mismatches so far 0
+RANDOM 200000 cycles (continuous + intermittent valid, mid-stream reset), mismatches so far 0
+ACTIVITY zero=0% cycles=20000 | operand-reg toggles base=190610 opt=190489 (1%) | product-reg toggles base=197001 opt=196915 (1%) | acc toggles base=174799 opt=174799
+ACTIVITY zero=50% cycles=20000 | operand-reg toggles base=162415 opt=95520 (42%) | product-reg toggles base=144073 opt=98437 (32%) | acc toggles base=92011 opt=92011
+ACTIVITY zero=80% cycles=20000 | operand-reg toggles base=119625 opt=38030 (69%) | product-reg toggles base=69056 opt=39617 (43%) | acc toggles base=42208 opt=42208
+TB RESULT: PASS  cycles_checked=1308642 valid_samples=1258476 ref_mismatches=0 base_vs_opt_mismatches=0 directed_failures=0

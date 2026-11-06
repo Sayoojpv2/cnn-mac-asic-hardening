@@ -1,0 +1,23 @@
+OpenSTA 2.6.0 GITDIR-NOT Copyright (c) 2024, Parallax Software, Inc.
+License GPLv3: GNU GPL version 3 <http://gnu.org/licenses/gpl.html>
+
+This is free software, and you are free to change and redistribute it
+under certain conditions; type `show_copying' for details. 
+This program comes with ABSOLUTELY NO WARRANTY; for details type `show_warranty'.
+Warning: asic/mac_baseline/runs/ci/final/nl/mac_baseline.nl.v line 4058, module sky130_fd_sc_hd__tapvpwrvgnd_1 not found. Creating black box for TAP_TAPCELL_ROW_0_106.
+Warning: asic/mac_baseline/runs/ci/final/nl/mac_baseline.nl.v line 4606, module sky130_ef_sc_hd__decap_12 not found. Creating black box for FILLER_0_3.
+Warning: asic/mac_baseline/runs/ci/final/nl/mac_baseline.nl.v line 4608, module sky130_fd_sc_hd__fill_1 not found. Creating black box for FILLER_0_27.
+Warning: asic/mac_baseline/runs/ci/final/nl/mac_baseline.nl.v line 4755, module sky130_fd_sc_hd__fill_2 not found. Creating black box for FILLER_4_105.
+Warning: clock clk vcd period 20.002 differs from SDC clock period 10.000
+Annotated 3316 pin activities.
+Group                  Internal  Switching    Leakage      Total
+                          Power      Power      Power      Power (Watts)
+----------------------------------------------------------------
+Sequential             2.81e-04   1.71e-05   5.37e-10   2.98e-04  32.6%
+Combinational          1.26e-04   1.67e-04   3.16e-09   2.94e-04  32.1%
+Clock                  2.02e-04   1.21e-04   2.31e-09   3.23e-04  35.3%
+Macro                  0.00e+00   0.00e+00   0.00e+00   0.00e+00   0.0%
+Pad                    0.00e+00   0.00e+00   0.00e+00   0.00e+00   0.0%
+----------------------------------------------------------------
+Total                  6.09e-04   3.06e-04   6.01e-09   9.15e-04 100.0%
+                          66.6%      33.4%       0.0%

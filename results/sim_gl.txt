@@ -1,0 +1,1 @@
+TB RESULT: PASS  cycles_checked=60009 valid_samples=60004 ref_mismatches=0 base_vs_opt_mismatches=0 directed_failures=0
