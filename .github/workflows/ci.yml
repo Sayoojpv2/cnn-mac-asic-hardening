@@ -39,7 +39,8 @@ jobs:
       - name: RTL-to-GDSII, sky130A / sky130_fd_sc_hd (LibreLane classic flow)
         run: |
           for d in mac_baseline mac_opiso; do
-            librelane --dockerized --run-tag ci asic/$d/config.json
+            # librelane --dockerized calls docker run -it; script provides the pseudo-TTY
+            script -q -e -c "librelane --dockerized --run-tag ci asic/$d/config.json" /dev/null
           done
       - name: Gate-level simulation + VCD-based power (OpenSTA)
         continue-on-error: true
