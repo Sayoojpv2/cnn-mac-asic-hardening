@@ -1,0 +1,3 @@
+VCD build/activity.vcd: timescale 0.001 ns, start 40 ns, end 200070 ns, span 200030 ns
+VCD tb_mac.u_base.clk: 40006 transitions, period 10.0000 ns (expected 10) OK
+VCD tb_mac.u_opt.clk: 40006 transitions, period 10.0000 ns (expected 10) OK

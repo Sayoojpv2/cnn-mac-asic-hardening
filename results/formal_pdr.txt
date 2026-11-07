@@ -1,0 +1,9 @@
+# ABC PDR, concrete miter (real multiplier), CI run 42358706554 (Yosys 0.33 + yosys-abc)
+## real
+build/miter_real              : i/o =   24/    1  lat =  126  and =   2703  lev = 33
+Invariant F[3] : 255 clauses with 124 flops (out of 126) (cex = 0, ave = 29.20)
+Verification of invariant with 255 clauses was successful.  Time =    64.35 sec
+Property proved.  Time =   265.57 sec
+## mutant
+build/miter_mutant            : i/o =   24/    1  lat =  126  and =   2702  lev = 33
+Output 0 of miter "build/miter_mutant" was asserted in frame 4.  Time =   164.68 sec

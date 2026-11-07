@@ -3,6 +3,11 @@ on:
   push:
     paths: ['rtl/**', 'tb/**', 'scripts/**', 'asic/**', '.github/workflows/**']
   workflow_dispatch:
+    inputs:
+      formal_experiments:
+        description: Also run the slow bounded formal experiments on the concrete RTL (up to 45 min)
+        type: boolean
+        default: false
 
 jobs:
   sim:
@@ -18,15 +23,41 @@ jobs:
 
   formal:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get update -qq && sudo apt-get install -y -qq yosys
-      - name: Formal equivalence (Yosys k-induction)
-        run: mkdir -p build && yosys -q -l build/equiv.log -s scripts/equiv.ys && grep -E 'SUCCESS|proven' build/equiv.log
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq yosys && mkdir -p build
+      - name: "Formal: unbounded ABC PDR, concrete RTL (real multiplier); mutant must fail"
+        run: timeout 30m bash scripts/formal.sh pdr
+      - name: "Formal: unbounded Yosys k-induction, multiplier abstracted; mutant must fail"
+        if: always()
+        run: bash scripts/formal.sh induct
       - uses: actions/upload-artifact@v4
         if: always()
-        with: { name: equiv-log, path: build/equiv.log }
+        with: { name: formal-logs, path: build/*.log }
+
+  # Manual only: bounded engines on the concrete miter. Neither reaches a useful depth in time
+  # (ABC PDR above proves the same miter unbounded); kept to reproduce that finding.
+  formal-concrete-experiment:
+    if: github.event_name == 'workflow_dispatch' && inputs.formal_experiments
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq yosys && mkdir -p build
+      - name: "Experiment: Yosys SAT bounded check, concrete RTL, depth 4 (equiv_bmc.ys)"
+        run: |
+          timeout 20m yosys -q -l build/equiv_bmc.log -s scripts/equiv_bmc.ys
+          grep SUCCESS build/equiv_bmc.log
+      - name: "Experiment: ABC bmc3 on the concrete miter (AIG)"
+        if: always()
+        run: |
+          yosys -q -l build/aig_prep.log -p "read_verilog -sv rtl/mac_baseline.sv rtl/mac_opiso.sv; proc; miter -equiv -flatten mac_baseline mac_opiso miter; hierarchy -top miter; flatten; opt_clean; dffunmap; techmap; opt -fast; dffunmap; setundef -zero -init; aigmap; opt_clean; stat; write_aiger -zinit build/miter.aig"
+          yosys-abc -c "read_aiger build/miter.aig; print_stats; bmc3 -F 16 -T 1200 -v" | tee build/abc_bmc3.log
+          grep -E 'No output asserted in 16 frames' build/abc_bmc3.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: formal-concrete-logs, path: build/*.log }
 
   asic:
     needs: sim
@@ -36,14 +67,12 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
       - run: pip install -q librelane==2.4.13 && sudo apt-get update -qq && sudo apt-get install -y -qq iverilog
-      - name: RTL-to-GDSII, sky130A / sky130_fd_sc_hd (LibreLane classic flow)
-        run: |
-          for d in mac_baseline mac_opiso; do
-            # librelane --dockerized calls docker run -it; script provides the pseudo-TTY
-            script -q -e -c "librelane --dockerized --run-tag ci asic/$d/config.json" /dev/null
-          done
-      - name: Gate-level simulation + VCD-based power (OpenSTA)
-        continue-on-error: true
+      # librelane --dockerized calls docker run -it; script provides the pseudo-TTY
+      - name: "LibreLane RTL-to-GDSII: mac_baseline (sky130A, sky130_fd_sc_hd)"
+        run: script -q -e -c "librelane --dockerized --run-tag ci asic/mac_baseline/config.json" /dev/null
+      - name: "LibreLane RTL-to-GDSII: mac_opiso (sky130A, sky130_fd_sc_hd)"
+        run: script -q -e -c "librelane --dockerized --run-tag ci asic/mac_opiso/config.json" /dev/null
+      - name: Gate-level regression (both final netlists), VCD check, OpenSTA activity-based power
         run: bash scripts/power.sh
       - uses: actions/upload-artifact@v4
         if: always()
@@ -53,6 +82,7 @@ jobs:
             asic/*/runs/ci/final/metrics.json
             asic/*/runs/ci/final/gds/
             asic/*/runs/ci/*-openroad-stapostpnr/summary.rpt
+            asic/*/runs/ci/*-openroad-stapostpnr/*ss_100C_1v60/max.rpt
             asic/*/runs/ci/*.log
             build/*.log
             build/*.rpt

@@ -1,9 +1,15 @@
 {
-  "meta": { "version": 2 },
+  "meta": {
+    "version": 2
+  },
   "DESIGN_NAME": "mac_opiso",
-  "VERILOG_FILES": ["dir::../../rtl/mac_opiso.sv"],
+  "VERILOG_FILES": [
+    "dir::../../rtl/mac_opiso.sv"
+  ],
   "CLOCK_PORT": "clk",
   "CLOCK_PERIOD": 10,
   "FP_CORE_UTIL": 40,
-  "PL_TARGET_DENSITY_PCT": 55
+  "PL_TARGET_DENSITY_PCT": 55,
+  "RUN_POST_GRT_RESIZER_TIMING": true,
+  "SYNTH_MUL_BOOTH": true
 }
