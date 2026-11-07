@@ -3,6 +3,11 @@ on:
   push:
     paths: ['rtl/**', 'tb/**', 'scripts/**', 'asic/**', '.github/workflows/**']
   workflow_dispatch:
+    inputs:
+      formal_experiments:
+        description: Also run the slow concrete-RTL formal experiments (up to 75 min; currently do not complete)
+        type: boolean
+        default: false
 
 jobs:
   sim:
@@ -30,7 +35,9 @@ jobs:
         if: always()
         with: { name: formal-logs, path: build/*.log }
 
+  # Manual only: the concrete (unabstracted) miter is not tractable for these engines so far.
   formal-concrete-experiment:
+    if: github.event_name == 'workflow_dispatch' && inputs.formal_experiments
     runs-on: ubuntu-24.04
     timeout-minutes: 75
     steps:
@@ -43,7 +50,7 @@ jobs:
       - name: "Experiment: ABC bmc3 on the concrete miter (AIG)"
         if: always()
         run: |
-          yosys -q -l build/aig_prep.log -p "read_verilog -sv rtl/mac_baseline.sv rtl/mac_opiso.sv; proc; miter -equiv -flatten mac_baseline mac_opiso miter; hierarchy -top miter; flatten; opt_clean; dffunmap; techmap; opt -fast; setundef -zero -init; aigmap; opt_clean; stat; write_aiger -zinit build/miter.aig"
+          yosys -q -l build/aig_prep.log -p "read_verilog -sv rtl/mac_baseline.sv rtl/mac_opiso.sv; proc; miter -equiv -flatten mac_baseline mac_opiso miter; hierarchy -top miter; flatten; opt_clean; dffunmap; techmap; opt -fast; dffunmap; setundef -zero -init; aigmap; opt_clean; stat; write_aiger -zinit build/miter.aig"
           yosys-abc -c "read_aiger build/miter.aig; print_stats; bmc3 -F 16 -T 1200 -v" | tee build/abc_bmc3.log
           grep -E 'No output asserted' build/abc_bmc3.log
       - name: "Experiment: ABC pdr on the concrete miter (unbounded)"

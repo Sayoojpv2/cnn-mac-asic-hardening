@@ -6,6 +6,7 @@ read_verilog $::env(RUN)/final/nl/$::env(D).nl.v
 link_design $::env(D)
 read_sdc $::env(RUN)/final/sdc/$::env(D).sdc
 read_spef $::env(RUN)/final/spef/nom/$::env(D).nom.spef
+# read_vcd prints "Annotated N pin activities"; compare with the total below.
 read_vcd -scope $::env(SCOPE) build/activity.vcd
-report_activity_annotation
+puts "Instance pins in design: [llength [get_pins */*]]"
 report_power -digits 4
