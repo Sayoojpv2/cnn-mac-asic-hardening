@@ -1,8 +1,10 @@
 // Self-checking testbench. mac_baseline and mac_opiso get identical stimulus and
 // are both checked every cycle against an independent reference model
 // (32-bit integer product, explicit pipeline). Plusargs:
-//   +vcd         dump DUT activity during the 50 % sparsity window to build/activity.vcd
-//   +power_only  run only reset + the activity windows (for gate-level power runs)
+//   +vcd         dump DUT activity of the final 50 % sparsity window to build/activity.vcd.
+//                Dumping starts with that window and runs to $finish (no $dumpoff), so the
+//                VCD time span is exactly the window and its clock period is 10 ns.
+//   +power_only  run only reset + the 50 % window (gate-level power runs)
 // Define GL when simulating gate-level netlists (disables internal toggle probes).
 `timescale 1ns/1ps
 module tb_mac;
@@ -110,16 +112,24 @@ module tb_mac;
 
   // Activity workload: continuous valid, post-ReLU activations with the given
   // zero fraction, random weights, clear every 25 samples (one 5x5 conv window).
+  integer w_valid, w_zero;
   task automatic activity(input integer zero_pct, input integer n);
 `ifndef GL
     {t_ops_b, t_ops_x, t_prod_b, t_prod_x, t_acc_b, t_acc_x} = '0;
     meas = 1'b1;
 `endif
+    w_valid = 0; w_zero = 0;
     for (int i = 0; i < n; i++) begin
       rand_step(100, zero_pct, 1'b1, 0);
       clear = (i % 25) == 0;
+      if (valid) begin
+        w_valid = w_valid + 1;
+        if (act == 0) w_zero = w_zero + 1;
+      end
     end
     flush();
+    $display("WINDOW zero_target=%0d%% cycles=%0d (+3 drain) valid_samples=%0d zero_activations=%0d (%0d.%02d%%)",
+             zero_pct, n, w_valid, w_zero, (100 * w_zero) / w_valid, ((10000 * w_zero) / w_valid) % 100);
 `ifndef GL
     meas = 1'b0;
     $display("ACTIVITY zero=%0d%% cycles=%0d | operand-reg toggles base=%0d opt=%0d (%0d%%) | product-reg toggles base=%0d opt=%0d (%0d%%) | acc toggles base=%0d opt=%0d",
@@ -158,6 +168,21 @@ module tb_mac;
       step(1, 1, 12'sd7, 8'sd9); step(0, 1, 12'sd55, 8'sd55); expect_acc(0, "clear w/o valid");
       step(1, 1, 12'sd7, 8'sd9); step(0, 0, 12'sd55, 8'sd55); step(1, 0, 12'sd1, 8'sd1);
       expect_acc(64, "idle cycle ignored");
+      // Zero activations with changing weights between live samples: held operands must not leak.
+      step(1, 1, 5, 7); step(1, 0, 0, 127); step(1, 0, 0, -128); step(1, 0, 0, 1); step(1, 0, -3, -9);
+      expect_acc(62, "5*7 + three zero activations (changing weights) + -3*-9");
+      // A clear carried by a zero-activation sample restarts the accumulator at 0.
+      step(1, 1, 5, 5); step(1, 1, 0, 99); expect_acc(0, "clear on zero activation");
+      // Latency: a lone sample reaches acc_o/valid_o exactly 3 cycles later, for one cycle.
+      step(1, 1, 3, 5);
+      for (int k = 1; k <= 4; k++) begin
+        step(1'b0, 1'b0, 12'd0, 8'd0);
+        if (vo_b !== (k == 3) || vo_x !== (k == 3) ||
+            (k == 3 && (acc_b !== 20'sd15 || acc_x !== 20'sd15))) begin
+          dir_err = dir_err + 1;
+          $display("DIRECTED FAIL latency k=%0d valid_o=%b/%b acc=%0d/%0d", k, vo_b, vo_x, acc_b, acc_x);
+        end
+      end
       $display("DIRECTED boundary/accumulator/clear checks: %0d failures", dir_err);
 
       // 3. Exhaustive multiplier: all 2^12 x 2^8 operand pairs, continuous valid,
@@ -177,18 +202,19 @@ module tb_mac;
       repeat (50000) rand_step(50, 50, 1'b0, 32);
       flush();
       $display("RANDOM 200000 cycles (continuous + intermittent valid, mid-stream reset), mismatches so far %0d", errors);
+
+      // 6. Switching activity (RTL probes) at 0 % and 80 % sparsity.
+      activity(0, 20000);
+      activity(80, 20000);
     end
 
-    // 6. Switching activity at three sparsity levels.
-    activity(0, 20000);
+    // 7. 50 % sparsity window, always last. With +vcd it is the only interval in the VCD.
     if ($test$plusargs("vcd")) begin
       $dumpfile("build/activity.vcd");
       $dumpvars(0, u_base);
       $dumpvars(0, u_opt);
     end
     activity(50, 20000);
-    if ($test$plusargs("vcd")) $dumpoff;
-    activity(80, 20000);
 
     $display("TB RESULT: %s  cycles_checked=%0d valid_samples=%0d ref_mismatches=%0d base_vs_opt_mismatches=%0d directed_failures=%0d",
              (errors == 0 && eq_err == 0 && dir_err == 0 && checks > 0) ? "PASS" : "FAIL",

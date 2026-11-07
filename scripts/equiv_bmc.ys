@@ -1,0 +1,16 @@
+# Bounded equivalence check of the concrete RTL (real multiplier), Yosys SAT.
+# Proves the outputs match in every cycle of every 4-cycle input sequence from the
+# all-zero (= reset) state. 4 is the first meaningful depth: a sample needs three
+# clock edges to reach acc_o/valid_o, so depths <= 3 compare only reset values.
+# Measured: depth 3 = 1 s, depth 4 did not finish in 15 min (local) -- the SAT solver
+# has to show two separate copies of the 12x8 multiplier agree. See README, Formal verification.
+# Run from the repository root:  yosys -s scripts/equiv_bmc.ys
+read_verilog -sv rtl/mac_baseline.sv rtl/mac_opiso.sv
+hierarchy -check
+proc
+check -assert
+miter -equiv -flatten -make_outputs mac_baseline mac_opiso miter
+hierarchy -top miter
+opt_clean
+dffunmap
+sat -verify -seq 4 -prove trigger 0 -set-init-zero miter

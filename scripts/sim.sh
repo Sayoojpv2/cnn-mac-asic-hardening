@@ -5,5 +5,5 @@ cd "$(dirname "$0")/.."
 mkdir -p build
 iverilog -g2012 -o build/tb_mac.vvp rtl/mac_baseline.sv rtl/mac_opiso.sv tb/tb_mac.sv
 vvp -n build/tb_mac.vvp > build/sim.log
-grep -E '^(MISMATCH|DIRECTED|EXHAUSTIVE|RANDOM|ACTIVITY|TB RESULT)' build/sim.log
+grep -E '^(MISMATCH|DIRECTED|EXHAUSTIVE|RANDOM|ACTIVITY|WINDOW|TB RESULT)' build/sim.log
 grep -q '^TB RESULT: PASS' build/sim.log
