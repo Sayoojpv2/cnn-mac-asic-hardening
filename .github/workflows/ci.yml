@@ -68,7 +68,7 @@ jobs:
         run: script -q -e -c "librelane --dockerized --run-tag ci asic/mac_baseline/config.json" /dev/null
       - name: "LibreLane RTL-to-GDSII: mac_opiso (sky130A, sky130_fd_sc_hd)"
         run: script -q -e -c "librelane --dockerized --run-tag ci asic/mac_opiso/config.json" /dev/null
-      - name: Gate-level simulation, VCD check and OpenSTA activity-based power
+      - name: Gate-level regression (both final netlists), VCD check, OpenSTA activity-based power
         run: bash scripts/power.sh
       - uses: actions/upload-artifact@v4
         if: always()

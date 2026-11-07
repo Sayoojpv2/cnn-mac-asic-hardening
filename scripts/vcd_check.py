@@ -37,8 +37,9 @@ def main() -> int:
                 stack.pop()
                 i += 1
             elif tok[i] == "$var":
+                # Aliased nets (tb clk -> DUT clk ports) share one identifier code.
                 if tok[i + 4] == "clk" and ".".join(stack) in scopes:
-                    clk_ids[tok[i + 3]] = ".".join(stack)
+                    clk_ids.setdefault(tok[i + 3], []).append(".".join(stack))
                 i += 5
             else:
                 i += 1
@@ -60,7 +61,7 @@ def main() -> int:
           f"end {t_last * scale:g} ns, span {span:g} ns")
     ok = True
     for scope in scopes:
-        codes = [c for c, s in clk_ids.items() if s == scope]
+        codes = [c for c, s in clk_ids.items() if scope in s]
         if not codes:
             print(f"VCD {scope}: no clk variable found")
             ok = False

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Run after both LibreLane flows (CI). Fails on any error.
-# 1) Gate-level simulation of the two final netlists together (zero-delay sky130 models),
-#    checked against the reference model; the 50 % sparsity window is dumped to build/activity.vcd.
+# 1) Gate-level simulation of the two final netlists together (zero-delay sky130 models):
+#    the full self-checking testbench (exhaustive multiplier sweep included), then a
+#    power-only run that dumps the 50 % sparsity window to build/activity.vcd.
 # 2) VCD sanity check: the clock period seen in each DUT scope must be the 10 ns SDC period.
 # 3) OpenSTA report_power per design with that VCD, post-route nominal SPEF, tt_025C_1v80.
 set -euo pipefail
@@ -14,6 +15,9 @@ echo "liberty: $LIB"
 iverilog -g2012 -DGL -DFUNCTIONAL -o build/tb_gl.vvp "$V/primitives.v" "$V/sky130_fd_sc_hd.v" \
   asic/mac_baseline/runs/ci/final/nl/mac_baseline.nl.v \
   asic/mac_opiso/runs/ci/final/nl/mac_opiso.nl.v tb/tb_mac.sv
+vvp -n build/tb_gl.vvp > build/sim_gl_full.log
+grep -E '^(MISMATCH|DIRECTED|EXHAUSTIVE|RANDOM|WINDOW|TB RESULT)' build/sim_gl_full.log
+grep -q '^TB RESULT: PASS' build/sim_gl_full.log
 vvp -n build/tb_gl.vvp +power_only +vcd > build/sim_gl.log
 grep -E '^(MISMATCH|DIRECTED FAIL|WINDOW|TB RESULT)' build/sim_gl.log
 grep -q '^TB RESULT: PASS' build/sim_gl.log
