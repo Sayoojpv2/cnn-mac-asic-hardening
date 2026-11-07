@@ -1,0 +1,14 @@
+# Yosys k-induction, multiplier abstracted (scripts/equiv_induct.ys), CI run 42358706554
+## real
+** Trying induction with length 1 **
+Base case for induction length 1 proven.
+Induction step failed. Incrementing induction length.
+** Trying induction with length 2 **
+Base case for induction length 2 proven.
+Induction step failed. Incrementing induction length.
+** Trying induction with length 3 **
+Base case for induction length 3 proven.
+Induction step proven: SUCCESS!
+## mutant (acc on v2): must fail
+Base case for induction length 4 proven.
+SAT temporal induction proof finished - model found for base case: FAIL!

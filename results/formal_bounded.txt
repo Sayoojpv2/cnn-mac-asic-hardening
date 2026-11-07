@@ -1,0 +1,4 @@
+# Bounded engines on the concrete miter (manual job, run 42355390097 / 42353296821)
+Yosys 0.33 sat -seq 4 (equiv_bmc.ys): timed out after 1200 s (CI); 900 s locally (Yosys 0.70). Depth 3: proven in 1 s, vacuous.
+Running "bmc3". PI/PO/Reg = 24/1/126. And =   2703. Lev =    33. ObjNums =  1803.
+No output asserted in 5 frames. Resource limit reached (timeout 1200 sec). Time =  1200.01 sec

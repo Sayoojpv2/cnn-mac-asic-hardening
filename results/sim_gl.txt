@@ -1,1 +1,11 @@
-TB RESULT: PASS  cycles_checked=60009 valid_samples=60004 ref_mismatches=0 base_vs_opt_mismatches=0 directed_failures=0
+# Gate-level regression: full testbench on both final (post-route) netlists
+DIRECTED boundary/accumulator/clear checks: 0 failures
+EXHAUSTIVE 1048576 operand pairs done, product range -262016..262144, mismatches so far 0
+RANDOM 200000 cycles (continuous + intermittent valid, mid-stream reset), mismatches so far 0
+WINDOW zero_target=0% cycles=20000 (+3 drain) valid_samples=20000 zero_activations=12 (0.06%)
+WINDOW zero_target=80% cycles=20000 (+3 drain) valid_samples=20000 zero_activations=16050 (80.25%)
+WINDOW zero_target=50% cycles=20000 (+3 drain) valid_samples=20000 zero_activations=9882 (49.41%)
+TB RESULT: PASS  cycles_checked=1308660 valid_samples=1258484 ref_mismatches=0 base_vs_opt_mismatches=0 directed_failures=0
+# Gate-level power run (+power_only +vcd): 50 % sparsity window
+WINDOW zero_target=50% cycles=20000 (+3 drain) valid_samples=20000 zero_activations=9915 (49.57%)
+TB RESULT: PASS  cycles_checked=20003 valid_samples=20004 ref_mismatches=0 base_vs_opt_mismatches=0 directed_failures=0
