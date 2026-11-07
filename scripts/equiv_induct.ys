@@ -1,8 +1,9 @@
 # Unbounded sequential equivalence of mac_baseline and mac_opiso (Yosys k-induction),
 # with the multiplier abstracted (scripts/mul_abstract.v). Proves that the outputs
 # match in every cycle of every input sequence from the all-zero state (= the
-# reset state of both designs). The arithmetic itself is verified separately by
-# exhaustive simulation and by the bounded check on the concrete RTL (equiv_bmc.ys).
+# reset state of both designs). The arithmetic is checked through exhaustive
+# multiplier simulation and the independent concrete-RTL ABC PDR equivalence proof.
+# The bounded SAT experiment on the concrete RTL did not complete.
 # Run from the repository root:  yosys -s scripts/equiv_induct.ys
 read_verilog -sv rtl/mac_baseline.sv rtl/mac_opiso.sv
 hierarchy -check
